@@ -1,0 +1,32 @@
+.task {
+    background-color: aqua;
+    display: flex;
+}
+
+.attr-desc {
+    background-color: bisque;
+    width: 70%;
+}
+
+.check {
+    background-color: green;
+    width: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.checkbox {
+    height: 60%;
+    width: 60%; 
+}
+
+.edit {
+    background-color: orangered;
+    width: 10%;
+}
+
+.delete {
+    background-color: orange;
+    width: 10%;
+}
