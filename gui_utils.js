@@ -1,5 +1,5 @@
-import {Database} from './edatabase.js';
-import {Task} from './task.js'; 
+import {Database} from './database.js';
+import {convert_JSON_to_task, Task} from './task.js'; 
 
 export async function refresh_tasklist() {
     let database = Database.getInstance(); 
@@ -7,10 +7,10 @@ export async function refresh_tasklist() {
     let tasklist = document.querySelector('.tasklist');
 
     tasklist.innerHTML = null;
-    let tasks = await database.get_all_tasks();
+    let tasks = await database.get_value("tasks", convert_JSON_to_task);
 
     tasks.forEach(function(task) {
-        let new_task = create_task_div(task.id, task.desc, task.complete);
+        let new_task = create_task_div(task.get_id(), task.get_desc(), task.get_complete());
         // Load task into list
         tasklist.appendChild(new_task); 
     });
@@ -18,7 +18,8 @@ export async function refresh_tasklist() {
 
 export function save_task(desc) {
     let database = Database.getInstance(); 
-    let task_id = database.create_task(desc);
+    let task = new Task(desc);
+    let task_id = database.add_item("tasks", task)
     return task_id; 
 }
 
@@ -108,7 +109,13 @@ function create_del_div(id) {
 function checked(checkbox) {
     const id = parse_id(checkbox.id);
     let database = Database.getInstance();
-    database.update_complete(id);
+    if (checkbox.checked) {
+        database.update("tasks", id, "complete", true);
+    }
+    else {
+        database.update("tasks", id, "complete", false);
+    }
+    
     refresh_tasklist();
 }
 
@@ -122,7 +129,7 @@ function set_editable(edit) {
 function update_desc(desc_input) {
     const id = parse_id(desc_input.id);
     let database = Database.getInstance();
-    database.update_desc(id, desc_input.value);
+    database.update("tasks", id, "desc", desc_input.value);
 }
 
 function remove_task(del) {
@@ -131,7 +138,7 @@ function remove_task(del) {
 
     // Delete task from database
     let database = Database.getInstance();
-    database.delete_item(id);
+    database.delete_item("tasks", id);
     refresh_tasklist();
 }
 

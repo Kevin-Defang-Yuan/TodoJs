@@ -1,82 +1,134 @@
-import {Task} from './task.js'; 
-
 class Database {
     constructor() {
-        this.data = [];
-        this.index = 0; 
-    }
-
-    create_task(desc) {
-        let task = new Task(this.index, desc);
-        this.add_item(task);
-        this.update_index(); 
-
-        return task.get_id();
-
-    }
-
-    update_index() {
-        this.index++; 
-    }
-
-    add_item(task) {
-        this.data.push(task);
-    }
-
-    update_desc(id, new_desc) {
-        let index = this.find_item_with_id(id);
-        if (index >= 0) {
-            this.data[index].set_desc(new_desc); 
-        }
-
-    }
-
-    update_complete(id) {
-        let index = this.find_item_with_id(id);
-        if (index >= 0) {
-            this.data[index].toggle_status(); 
-        }
-
-    }
-
-    delete_item(id) {
-        let index = this.find_item_with_id(id);
-        if (index >= 0) {
-            this.data.splice(index, 1);
+        this.index_key = "Indexes";
+        if (this.key_exists(this.index_key) === false) {
+            this.init_index_map();
         }
     }
 
-    find_item_with_id(id) {
-        for (let i = 0; i < this.get_size(); i++) {
-            if (this.data[i].get_id() == id) {
-                return i;
+    // Public
+    add_item(key, object) {      
+        if (this.key_exists(key) === false) {
+            this.init_key(key);
+        }
+
+        if (this.index_exists(key) === false) {
+            this.new_index(key);
+        }
+        let json_val = this.get_json(key);
+
+        // Update object id
+        const id = this.get_index(key);
+        object.id = id; 
+        json_val.push(JSON.stringify(object));
+        this.save(key, json_val);
+        this.update_index(key); 
+        return id; 
+    }
+
+    //Public
+    delete_item(key, id) {
+        let json_list = this.get_json_list(key);
+        json_list.forEach((json, i, array) => {
+            if (json["id"] == id) {
+                array.splice(i, 1);
+            } 
+        });
+
+        this.save_list(key, json_list);
+    }
+
+    //Public
+    update(key, id, attr, new_value) {
+        let json_list = this.get_json_list(key);
+        json_list.forEach((json) => {
+            if (json["id"] == id) {
+                json[attr] = new_value;
             }
-        }
-        return -1; 
+        });
+        this.save_list(key, json_list);
     }
 
-    get_size() {
-        return this.data.length; 
+    init_index_map() {
+        window.localStorage.setItem(this.index_key, JSON.stringify({}));
     }
 
-    print_data() {
-        for (let i = 0; i < this.get_size(); i++) {
-            console.log(this.data[i].to_string());
-        }
+    
+
+    new_index(key) {
+        let json_val = this.get_json(this.index_key);
+        json_val[key] = 0;
+        this.save(this.index_key, json_val);
     }
 
-    get_all_tasks() {
-        //Json
-        let res = []
-        for (let i = 0; i < this.get_size(); i++) {
-            res.push({
-                "Id": this.data[i].get_id(),
-                "Description": this.data[i].get_desc(),
-                "Complete": this.data[i].complete 
-            });
+    index_exists(key) {
+        let json_val = this.get_json(this.index_key);
+        if (Object.keys(json_val).length === 0) {
+            return false;
         }
-        return res; 
+
+        if (json_val.hasOwnProperty(key)) {
+            return true;
+        }
+        return false;
     }
+
+    get_index(key) {
+        let json_val = this.get_json(this.index_key);
+        return json_val[key];
+    }
+
+    update_index(key) {
+        let json_val = this.get_json(this.index_key);
+        json_val[key]++; 
+        this.save(this.index_key, json_val);
+    }
+
+    init_key(key) {
+        window.localStorage.setItem(key, JSON.stringify([]));
+    }
+
+    key_exists(key) {
+        if (window.localStorage.getItem(key) === null) {
+            return false;
+        }
+        return true;
+    }
+
+    get_value(key, cb) {
+        let val = this.get_json(key);
+        let json_list = val.map((json) => {
+            return JSON.parse(json);
+        })
+        let object_list = json_list.map(cb);
+        return object_list;
+    } 
+
+    get_json(key) {
+        let data = JSON.parse(window.localStorage.getItem(key));
+        return data;
+    }
+
+    get_json_list(key) {
+        let data = JSON.parse(window.localStorage.getItem(key));
+
+        let data_list = data.map((json) => {
+            return JSON.parse(json);
+        });
+        return data_list;
+    }
+
+    save(key, data) {
+        window.localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    save_list(key, json_list) {
+        let string_list = json_list.map((json) => {
+            return JSON.stringify(json);
+        });
+        this.save(key, string_list);
+    }
+
 }
 
 Database.instance = null;

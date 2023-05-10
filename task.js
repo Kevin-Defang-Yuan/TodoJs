@@ -1,8 +1,8 @@
 export class Task {
-    constructor(id, desc) {
+    constructor(desc, complete=false, id=null) {
         this.id = id;
         this.desc = desc;
-        this.complete = false;
+        this.complete = complete;
     }
 
     to_JSON() {
@@ -21,7 +21,7 @@ export class Task {
     get_desc() {
         return this.desc;
     }
-    get_completed() {
+    get_complete() {
         return this.complete; 
     }
     to_string() {
@@ -30,8 +30,7 @@ export class Task {
     }
 }
 
-export function JSON_to_object(json) {
-    let task = new Task(json.id, json.desc);
-    task.complete = json.complete;
+export function convert_JSON_to_task(json) {
+    let task = new Task(json["desc"], json["complete"], json["id"]);
     return task;
 }
